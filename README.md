@@ -1,5 +1,5 @@
 ## 瀑布流-新闻网页
-预览地址
+https://saraalwayslikeworld.github.io/waterfall-sinanews/index.html
 ## 懒加载原理
 在加载有大量图片的网页时不同时加载全部图片，只加载出现在用户视野中的图片。
 通过监控滚屏事件判断元素是否出现在用户视野，然后将被看到的图片src从load图片替换成页面图片的src。
