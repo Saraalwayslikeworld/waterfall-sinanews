@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>sinanews</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,body {
+            height: 100%;
+        }
+        .container {
+            width: 900px;
+            margin: 0 auto;
+        }
+        .container #newlist {
+            width: 100%;
+            position: relative; 
+        }
+        .container #newlist .item {
+            list-style: none;
+            position: absolute;
+            margin: 10px;
+            padding-bottom:10px;
+            border: 1px solid #dfdfdf;
+            width: 280px;
+        }
+        .container #newlist .item .link {
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .container #newlist .item .link>img {
+            width: 260px;
+            margin: 10px;
+        }
+        .container #newlist .item .header {
+            margin: 0 12px;
+            height: 25px;
+            font-size: 16px;
+            border-bottom: 1px solid #dbdbdb;
+        }
+        .container #newlist .item .intro {
+            color: #777371;
+            font-size: 12px;
+            line-height: 1.8;
+            margin: 10px 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <ul id="newlist">
+            <!-- <li class="item">
+                <a class="link" href="#"><img src="http://via.placeholder.com/260x160" alt=""></a>
+                <h4 class="header">我的新闻标题</h4>
+                <p class="intro">新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容</p>
+            </li> -->
+            <li class="item" display=hide></li>
+        </ul>
+    </div>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script>
+    var newsPage = {
+        init: function(){
+            this.itemWidth = $('.item').outerWidth(true)
+            this.colCount = $('#newlist').width()/this.itemWidth
+            this.colHeightArray = []
+            var _this = this
+            for(var i=0;i<this.colCount;i++){
+                _this.colHeightArray[i] = 0
+            }
+            this.isLoad = false
+            this.currentPage = 1
+            this.$content = $('.container')
+            this.$window = $(window)
+            this.start()
+            this.bind()
+        },
+        bind: function(){
+            var _this = this
+            this.$window.scroll(function(){
+                if(_this.$window.scrollTop()+_this.$window.height() > _this.$content.height()-20){
+                    _this.start()
+                }
+            })
+        },
+        start: function(){
+            var _this = this
+            this.getData(function(data){
+                _this.render(data)
+            })
+        },
+        getData: function(callback){
+            var _this=this
+            if(this.isLoad)return
+            this.isLoad = true
+            $.ajax({
+                url:"http://platform.sina.com.cn/slide/album_tech",
+                dataType:"jsonp",
+                jsonp:"jsoncallback",
+                data:{
+                    app_key: '1271687855',
+                    num: 20,
+                    page: _this.currentPage
+                },
+            }).done(function(ret){
+                callback(ret.data)
+                _this.currentPage += 20
+                console.log(ret.data)
+            }).fail(function(){
+                console.log("error...")
+            }).always(function(){
+                console.log("ajax request ok")
+                _this.isLoad = false
+            })
+        },
+        render: function(newslist){
+            var _this = this
+            $('.item').eq(0).hide()
+            newslist.forEach(function(item){
+                var tpl = '<li class="item">\
+                <a class="link" href="#"><img src="http://via.placeholder.com/260x160" alt=""></a>\
+                <h4 class="header">我的新闻标题</h4>\
+                <p class="intro">新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容</p>\
+                </li>' 
+                var $node = $(tpl)
+                $node.find('.link').attr('href',item.url)
+                $node.find('.link>img').attr('src',item.img_url)
+                $node.find('.header').text(item.short_name)
+                $node.find('.intro').text(item.short_intro) 
+                $node.find('img').load(function(){
+                    $('#newlist').append($node)
+                    console.log('img load')
+                    _this.waterfall($node)
+                })
+            })   
+        },
+        waterfall: function($node){
+            var _this =this
+            var minValue = this.colHeightArray[0]
+            var minIndex = 0
+            for(var i=0;i<_this.colCount;i++){
+                if(_this.colHeightArray[i]<minValue){
+                    minValue = _this.colHeightArray[i]
+                    minIndex = i
+                }
+            }
+            $node.css({
+                "top": minValue,
+                "left": minIndex*_this.itemWidth
+            })
+            _this.colHeightArray[minIndex] += $node.outerHeight(true)
+            console.log(minValue,minIndex)
+            $('#newlist').height(Math.max.apply(null,_this.colHeightArray))
+        }
+    }
+    newsPage.init()  
+/*
+        var itemWidth = $('.item').outerWidth(true)
+        var colCount = $('#newlist').width()/itemWidth
+        var colHeightArray = []
+        for(var i=0;i<colCount;i++){
+            colHeightArray[i] = 0
+        }
+        function start(){
+            getData(function(ret){
+                render(ret)
+            })
+        }
+        start()
+        //数据获取 
+        var isLoad =false
+        var currentPage = 1
+        function getData(callback){
+            if(isLoad)return
+            isLoad = true
+            $.ajax({
+                url:"http://platform.sina.com.cn/slide/album_tech",
+                dataType:"jsonp",
+                jsonp:"jsoncallback",
+                data:{
+                    app_key: '1271687855',
+                    num: 20,
+                    page: currentPage
+                },
+            }).done(function(ret){
+                callback(ret)
+                currentPage += 20
+                console.log(ret.data)
+            }).fail(function(){
+                console.log("error...")
+            }).always(function(){
+                console.log("ajax request ok")
+                isLoad = false
+            })
+        }
+        // 数据渲染
+        function render(news){
+            $('.item').eq(0).hide()
+            news.data.forEach(function(item){
+                var tpl = '<li class="item">\
+                <a class="link" href="#"><img src="http://via.placeholder.com/260x160" alt=""></a>\
+                <h4 class="header">我的新闻标题</h4>\
+                <p class="intro">新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容新闻内容</p>\
+                </li>' 
+                var $node = $(tpl)
+                $node.find('.link').attr('href',item.url)
+                $node.find('.link>img').attr('src',item.img_url)
+                $node.find('.header').text(item.short_name)
+                $node.find('.intro').text(item.short_intro)
+                $('#newlist').append($node)
+                $node.find('img').load(function(){
+                    waterfall($node)
+                })
+            })   
+        }
+        // 页面布局 
+        function waterfall($node){
+            var minValue = colHeightArray[0]
+            var minIndex = 0
+            for(var i=0;i<colCount;i++){
+                if(colHeightArray[i]<minValue){
+                    minValue = colHeightArray[i]
+                    minIndex = i
+                }
+            }
+            $node.css({
+                "top": minValue,
+                "left": minIndex*itemWidth
+            })
+            colHeightArray[minIndex] += $node.outerHeight(true)
+            $('#newlist').height(Math.max.apply(null,colHeightArray))
+        }
+        // 到底加载
+        var $content = $('.container')
+        var $window = $(window)
+        $(window).scroll(function(){
+            if($window.scrollTop()+$window.height() > $content.height()-10){
+                start()
+            }
+        })
+        */
+    </script>
+</body>
+</html>
